@@ -1,7 +1,5 @@
 CREATE DATABASE EmployeeDbForHrDept;
-USE EmployeeDbForHrDept;
 
-DROP TABLE IF EXISTS Employee;
 CREATE TABLE Employee (
     EmpID VARCHAR(20) PRIMARY KEY,
     EmpName VARCHAR(20),
@@ -9,29 +7,8 @@ CREATE TABLE Employee (
     DepartmentID INT,
     StateID INT);
 
-	ALTER TABLE ProjectManager
-DROP CONSTRAINT FK__ProjectManager__Department;
 
-
-DROP TABLE IF EXISTS Department;
-CREATE TABLE Department (
-    DepartmentID INT PRIMARY KEY,
-    Departmantname VARCHAR(20));
-
-DROP TABLE IF EXISTS ProjectManager;
-CREATE TABLE ProjectManager (
-    ProjectManagerID INT PRIMARY KEY,
-    ProjectManagerName VARCHAR(20),
-    DepartmentID INT,
-    FOREIGN KEY (DepartmentID) REFERENCES Department(DepartmentID));
-
-DROP TABLE IF EXISTS StateMaster;
-CREATE TABLE StateMaster (
-    StateID INT PRIMARY KEY,
-    StateName VARCHAR(20)
-);
-
-INSERT INTO Employee (EmpID, EmpName, Salary, DepartmentID, StateID)
+	INSERT INTO Employee (EmpID, EmpName, Salary, DepartmentID, StateID)
 VALUES 
 ('A01', 'Monika singh', 10000, 1, 101),
 ('A02', 'Vishal kumar', 25000, 2, 101),
@@ -44,19 +21,25 @@ VALUES
 ('C04', 'Sagar Kumar', 50000, 2, 102),
 ('C05', 'Amitabh singh', 37000, 3, 108);
 
-INSERT INTO Department (DepartmentID, Departmantname)
+SELECT *
+FROM Department;
+
+CREATE TABLE Department (
+    DepartmentID INT PRIMARY KEY,
+    Departmantname VARCHAR(20));
+
+	INSERT INTO Department (DepartmentID, Departmantname)
 VALUES 
 (1, 'IT'),
 (2, 'HR'),
 (3, 'Admin'),
 (4, 'Account');
 
-
-ALTER TABLE ProjectManager
-ADD CONSTRAINT FK__ProjectManager__Department
-FOREIGN KEY (DepartmentID) REFERENCES Department(DepartmentID);
-
-
+CREATE TABLE ProjectManager (
+    ProjectManagerID INT PRIMARY KEY,
+    ProjectManagerName VARCHAR(20),
+    DepartmentID INT,
+    FOREIGN KEY (DepartmentID) REFERENCES Department(DepartmentID));
 
 INSERT INTO ProjectManager (ProjectManagerID, ProjectManagerName, DepartmentID)
 VALUES 
@@ -65,6 +48,11 @@ VALUES
 (3, 'Vipul', 2),
 (4, 'Satish', 2),
 (5, 'Amitabh', 3);
+
+CREATE TABLE StateMaster (
+    StateID INT PRIMARY KEY,
+    StateName VARCHAR(20)
+);
 
 INSERT INTO StateMaster (StateID, StateName)
 VALUES 
@@ -75,9 +63,25 @@ VALUES
 (105, 'Ido'),
 (106, 'Ibadan');
 
+SELECT *
+FROM StateMaster;
+
+-- Analytical questions
+--Ques.1. Write a SQL query to fetch the list of employees with same salary.
+--Ques.2. Write a SQL query to fetch Find the second highest salary and the department and the name of the earner.
+--Ques.3. Write a query to get the maximum salary from each department, the name of the department and the name of the earner.
+--Ques.4. Write a SQL query to fetch Projectmanger-wise count of employees sorted by projectmanger's count in descending order.
+--Ques.5. Write a query to fetch only the first name from the EmpName column of Employee table and after that add the salary.
+--Ques.6. Write a SQL query to fetch only odd salaries from from the employee table.
+--Ques.7. Create a view to fetch EmpID,Empname, Departmantname, ProjectMangerName where salary is greater than 30000.
+--Ques.8. Create a view to fetch the top earners from each department, the employee name and the dept they belong to.
+--Ques.9. Create a procedures to update the employee’s salary by 25% where department is ‘IT’ and project manger not ‘Vivek, Satish’.
+--Ques.10. Create a Stored procedures to fetch All the empname along with Departmentname, projectmanagername, statename and use error handling also.
+
+
+-- ANSWERE
 
 --Ques.1. Write a SQL query to fetch the list of employees with same salary.
-
 
 SELECT EmpName, Salary
 FROM Employee
@@ -85,45 +89,51 @@ WHERE Salary IN (
   SELECT Salary
   FROM Employee
   GROUP BY Salary
-  HAVING COUNT(EmpID) > 1
-)
+ HAVING COUNT(EmpID) > 1
+ );
 
 
---Ques.2. Write a SQL query to fetch Find the second highest salary and the department and name of the earner.
-
-
-SELECT MAX(Salary) AS SecondHighestSalary, DepartmentID, EmpName
+ -- find the name department of the employee withh the higest salary
+SELECT EmpName,DepartmentID, stateID
 FROM Employee
-WHERE Salary < (
-  SELECT MAX(Salary)
-  FROM Employee
+WHERE Salary = ( 
+SELECT MAX(Salary)
+FROM Employee
 )
 
+
+
+--Ques.2. Write a SQL query to fetch Find the second highest salary and the department and the name of the earner.
+
+SELECT E.salary, D.Departmantname, E.EmpName
+from Employee E
+INNER JOIN Department D
+ON E.DepartmentID = D.DepartmentID
+ORDER BY Salary DESC
+OFFSET 1 ROW
+FETCH NEXT 2 ROW ONLY
+;
 
 --Ques.3. Write a query to get the maximum salary from each department, the name of the department and the name of the earner.
 
-
-SELECT MAX(Salary) AS MaxSalary, DepartmentID, EmpName, Departmantname
+SELECT MAX(Salary) AS MaxSalary, DepartmentID, EmpName
 FROM Employee
-JOIN Department ON Employee.DepartmentID = Department.DepartmentID
-GROUP BY DepartmentID
-
+GROUP BY DepartmentID,EmpName
+;
 
 --Ques.4. Write a SQL query to fetch Projectmanger-wise count of employees sorted by projectmanger's count in descending order.
-
 
 SELECT ProjectManagerName, COUNT(EmpID) AS EmpCount
 FROM ProjectManager
 JOIN Employee ON ProjectManager.DepartmentID = Employee.DepartmentID
 GROUP BY ProjectManagerName
-ORDER BY EmpCount DESC
+ORDER BY EmpCount DESC;
 
 
 --Ques.5. Write a query to fetch only the first name from the EmpName column of Employee table and after that add the salary.
 
-
 SELECT CONCAT(LEFT(EmpName, CHARINDEX(' ', EmpName) - 1), '_', Salary) AS EmpName_Salary
-FROM Employee
+FROM Employee;
 
 
 --Ques.6. Write a SQL query to fetch only odd salaries from from the employee table.
@@ -131,7 +141,7 @@ FROM Employee
 
 SELECT Salary
 FROM Employee
-WHERE Salary % 2 != 0
+WHERE Salary % 2 = 1
 
 
 --Ques.7. Create a view to fetch EmpID,Empname, Departmantname, ProjectMangerName where salary is greater than 30000.
